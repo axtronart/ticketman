@@ -1,15 +1,23 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using UnityEngine;
 using UnityScript.Lang;
 
 public class Level : MonoBehaviour
 {
+    public MyPathNode[,] grid;
+
+    public int enemyNumber = 6, playerNumber = 3; //public для возможности редактировать через инспектор 
+    //public static int X, Y; // ширина и высота поля
+    public static int X = 7;
+    public static int Y = 14;
+
     public int mapScale = 128; // количество пикселей в одной клетке
     private int height = 14; // количество клеток в высоту
     private int width = 7; // количество клеток в ширину
     public int scale = 2; // масштаб для стульев, позднее заменить и использовать mapscale
-    private int maxcount = 10; // максимальное количество пассажиров
+    private int maxcount = 2; // максимальное количество пассажиров
     private int current = 0; // текущее количество пассажиров
     public Sprite[] headsprites; // массив голов
     public Sprite[] bodysprites; // массив туловищ
@@ -24,7 +32,10 @@ public class Level : MonoBehaviour
     public Transform back;
     public Array entryPoints = new Array();
 
-    private int[,] mapArr = {
+    public static bool ready = false; //мы не сможем начать искать путь, пока не разместим юнитов на поле.
+
+
+    public static int[,] mapArr = {
       {1,1,1,1,1,1,1},
       {1,2,2,0,2,2,1},
       {1,2,2,0,0,0,3},
@@ -43,14 +54,40 @@ public class Level : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        //Generate a grid - nodes according to the specified size
+        grid = new MyPathNode[width, height];
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                //Boolean isWall = ((y % 2) != 0) && (rnd.Next (0, 10) != 8);
+                bool isWall = false;
+                grid[x, y] = new MyPathNode()
+                {
+                    IsWall = isWall,
+                    X = x,
+                    Y = y,
+                };
+            }
+        }
+
+
         //Получение точек, в которых будут появляться пассажиры
         entryPoints = getEntryPoints();
+        Debug.Log("entrypoints" + entryPoints);
+
         //создание внутренностей автобуса
         createBusFromMap();
         //запуск функции добавления пассажиров
-        InvokeRepeating("busstation", 0, 5);
+        //InvokeRepeating("busstation", 0, 5);// закомментировал для отладки пути
         //загрузка ресурсов 
         LoadSourcePassenger();
+
+
+
+        addNewPass();
+        ready = true; // можем начинать искать путь
 
     }
     void LoadSourcePassenger()
@@ -59,7 +96,7 @@ public class Level : MonoBehaviour
         bodysprites = Resources.LoadAll<Sprite>("body_m");  //Resources.LoadAll<Sprite>("Sprites");
         footsprites = Resources.LoadAll<Sprite>("foot_m");  //Resources.LoadAll<Sprite>("Sprites");
         Debug.Log("Загружено голов {0}, тел {1}, ног {2}");
-        Debug.Log(headsprites.Length + " " + bodysprites.Length + " " + footsprites.Length);
+        Debug.Log("Длина голов, тела, ног "+ headsprites.Length + " " + bodysprites.Length + " " + footsprites.Length);
         //Resources.Load <Sprite> ("Sprites/Graphics_3");
     }
 
@@ -69,7 +106,7 @@ public class Level : MonoBehaviour
         person.GetComponentsInChildren<SpriteRenderer>()[1].sprite = bodysprites[Random.Range(0, bodysprites.Length)];
         person.GetComponentsInChildren<SpriteRenderer>()[2].sprite = footsprites[Random.Range(0, footsprites.Length)];
     }
-
+/*
     public Passenger[] generateListPassenger()
     {
         passList = new Passenger[10];
@@ -78,7 +115,7 @@ public class Level : MonoBehaviour
 
         }
         return passList;
-    }
+    }*/
 
     
 
@@ -138,6 +175,7 @@ public class Level : MonoBehaviour
         return arr;
     }
 
+    //Добавление новых персонажей
     private void busstation()
     {
         if (maxcount > current)
@@ -154,7 +192,7 @@ public class Level : MonoBehaviour
     {
         current--;
     }
-
+ 
 }
 
 
