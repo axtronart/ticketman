@@ -8,16 +8,16 @@ public class Level : MonoBehaviour
 {
     public MyPathNode[,] grid;
 
-    public int enemyNumber = 6, playerNumber = 3; //public для возможности редактировать через инспектор 
+    //public int enemyNumber = 6, playerNumber = 3; //public для возможности редактировать через инспектор 
     //public static int X, Y; // ширина и высота поля
-    public static int X = 7;
-    public static int Y = 14;
-
+    public static int Width = 8;
+    public static int Height = 14;
+    
     public int mapScale = 128; // количество пикселей в одной клетке
-    private int height = 14; // количество клеток в высоту
-    private int width = 7; // количество клеток в ширину
+   // private int height = 14; // количество клеток в высоту
+   // private int width = 7; // количество клеток в ширину
     public int scale = 2; // масштаб для стульев, позднее заменить и использовать mapscale
-    private int maxcount = 2; // максимальное количество пассажиров
+    private int maxcount = 25; // максимальное количество пассажиров
     private int current = 0; // текущее количество пассажиров
     public Sprite[] headsprites; // массив голов
     public Sprite[] bodysprites; // массив туловищ
@@ -31,41 +31,62 @@ public class Level : MonoBehaviour
     public Transform person;
     public Transform back;
     public Array entryPoints = new Array();
+    public ArrayList ExitPoint;//точки выхода, в которых объект уничтожается
 
     public static bool ready = false; //мы не сможем начать искать путь, пока не разместим юнитов на поле.
 
-
-    public static int[,] mapArr = {
-      {1,1,1,1,1,1,1},
-      {1,2,2,0,2,2,1},
-      {1,2,2,0,0,0,3},
-      {1,2,2,0,2,2,1},
-      {1,2,2,0,2,2,1},
-      {1,2,2,0,2,2,1},
-      {1,2,2,0,2,2,1},
-      {1,2,2,0,2,2,1},
-      {1,2,2,0,0,0,1},
-      {1,2,2,2,2,2,1},
-      {1,1,1,1,1,1,1},
-      {1,1,1,1,1,1,1},
-      {1,1,1,1,1,1,1},
-      {1,1,1,1,1,1,1},
+    //1-непроходимая точка
+    public static int[,] mapArrTemp = {
+      {1,1,1,1,1,1,1,1},
+      {1,2,2,0,2,2,1,4},
+      {1,2,2,0,0,0,0,4},
+      {1,2,2,0,2,2,1,4},
+      {1,2,2,0,2,2,1,4},
+      {1,2,2,0,2,2,1,4},
+      {1,2,2,0,2,2,1,4},
+      {1,2,2,0,2,2,1,4},
+      {1,2,2,0,0,0,0,4},
+      {1,2,2,2,2,2,1,4},
+      {1,1,1,1,1,1,1,4},
+      {1,1,1,1,1,1,1,4},
+      {1,1,1,1,1,1,1,5},
+      {1,1,1,1,1,1,1,1},
 };
+
+    public int[,] Map = new int[Width, Height]; // массив для загрузки уровня
+
     // Use this for initialization
     void Start()
     {
-        //Generate a grid - nodes according to the specified size
-        grid = new MyPathNode[width, height];
+       
 
-        for (int x = 0; x < width; x++)
+
+        //Получение точек, в которых будут появляться пассажиры
+        entryPoints = getEntryPoints();
+
+        ExitPoint = getExitPoints(); //получение точек выхода
+
+        Debug.Log("entrypoints" + entryPoints);
+                
+        //создание внутренностей автобуса
+        createBusFromMap();
+        //запуск функции добавления пассажиров
+        InvokeRepeating("busstation", 0, 5);// закомментировал для отладки пути
+        //загрузка ресурсов 
+        LoadSourcePassenger();
+
+        //Generate a grid - nodes according to the specified size
+        grid = new MyPathNode[Width, Height];
+
+        for (int x = 0; x < Width; x++)
         {
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < Height; y++)
             {
                 //Boolean isWall = ((y % 2) != 0) && (rnd.Next (0, 10) != 8);
-                bool isWall = false;
+                // bool isWall = false;
                 grid[x, y] = new MyPathNode()
                 {
-                    IsWall = isWall,
+                    IsWall = (Map[x, y] == 1),
                     X = x,
                     Y = y,
                 };
@@ -73,20 +94,8 @@ public class Level : MonoBehaviour
         }
 
 
-        //Получение точек, в которых будут появляться пассажиры
-        entryPoints = getEntryPoints();
-        Debug.Log("entrypoints" + entryPoints);
 
-        //создание внутренностей автобуса
-        createBusFromMap();
-        //запуск функции добавления пассажиров
-        //InvokeRepeating("busstation", 0, 5);// закомментировал для отладки пути
-        //загрузка ресурсов 
-        LoadSourcePassenger();
-
-
-
-        addNewPass();
+       // addNewPass();
         ready = true; // можем начинать искать путь
 
     }
@@ -122,30 +131,30 @@ public class Level : MonoBehaviour
     void createBusFromMap()
     {
         //Здесь происходит первоначальная отрисовка матрицы автобуса
-        for (int y = 0; y < height; y++)
+        for (int x = 0; x < Width; x++)
         {
-            for (int x = 0; x < width; x++)
+            for (int y = 0; y < Height; y++)    
             {
-                if (mapArr[y, x] == 0)
+                Map[x, y] = mapArrTemp[y, x];
+                //Debug.Log("X="+x +"Y="+y);
+                //Debug.Log(mapArr[y, x]);
+                
+                if (Map[x, y] == 0)
                 {
-                    Instantiate(brick, new Vector3(x * scale, y * scale, 0), Quaternion.identity);
+                    Instantiate(brick, new Vector2(x * scale, y * scale), Quaternion.identity);
                 }
-                else
-                    if (mapArr[y, x] == 1)
-                    {
-                        Instantiate(floor, new Vector3(x * scale, y * scale, 0), Quaternion.identity);
-                    }
-                    else
-                        if (mapArr[y, x] == 2)
-                        {
-                            Instantiate(chair, new Vector3(x * scale, y * scale, 0), Quaternion.identity);
-                        }
-                        else
-                            Instantiate(back, new Vector3(x * scale, y * scale, 0), Quaternion.identity);
-                //     Debug.Log("Xp = " + x * scale);
-                //     Debug.Log("Yp = " + y * scale);
-
-
+                       else
+                           if (Map[x, y] == 1)
+                           {
+                               Instantiate(floor, new Vector2(x * scale, y * scale), Quaternion.identity);
+                           }
+                           else
+                               if (Map[x, y] == 2)
+                               {
+                                   Instantiate(chair, new Vector2(x * scale, y * scale), Quaternion.identity);
+                               }
+                               else
+                                   Instantiate(chair, new Vector2(x * scale, y * scale), Quaternion.identity);
             }
         }
     }
@@ -157,15 +166,32 @@ public class Level : MonoBehaviour
         generateNewPassenger();//присвоение текстур
         Instantiate(person, new Vector3(tempcoord.x * scale, tempcoord.y * scale, 0), Quaternion.identity);
     }
-    public Array getEntryPoints()
+    public ArrayList getEntryPoints()
     {
-        var arr = new Array();
+        var arr = new ArrayList();
 
-        for (int y = 0; y < height; y++)
+        for (int y = 0; y < Height; y++)
         {
-            for (int x = 0; x < width; x++)
+            for (int x = 0; x < Width; x++)
             {
-                if (mapArr[y, x] == 3)
+                if (mapArrTemp[y, x] == 4)
+                {
+                    var vec = new Vector2(x, y);
+                    arr.Add(vec);
+                }
+            }
+        }
+        return arr;
+    }
+    public ArrayList getExitPoints()//точка 5, точка выхода
+    {
+        var arr = new ArrayList();
+
+        for (int y = 0; y < Height; y++)
+        {
+            for (int x = 0; x < Width; x++)
+            {
+                if (mapArrTemp[y, x] == 5)
                 {
                     var vec = new Vector2(x, y);
                     arr.Add(vec);
@@ -178,6 +204,7 @@ public class Level : MonoBehaviour
     //Добавление новых персонажей
     private void busstation()
     {
+        Debug.Log("busstation");
         if (maxcount > current)
         {
             for (var i = 0; i < Random.Range(0, maxcount - current); i++)
@@ -192,7 +219,9 @@ public class Level : MonoBehaviour
     {
         current--;
     }
- 
+
+
+   
 }
 
 

@@ -13,10 +13,10 @@ public class Passenger : MonoBehaviour
     //старое
     public GameObject map;
     Level LevelSettings;
-    public float speed = 1.0f;
+    public float speed = 4.0f;
     public Transform Coords; //текущие координаты
     bool MoveBool = false;
-    public Vector3[] ExitPoint;//точки выхода, в которых объект уничтожается
+   
     private float tempstep = 0;
     private ArrayList path = new ArrayList();
     private Vector2 currentPosition;
@@ -70,8 +70,7 @@ public class Passenger : MonoBehaviour
     {
         map = GameObject.Find("Bus"); // получение ссылки на автобус, к которому прикреплен скрипт
         LevelSettings = map.GetComponent<Level>(); //получение ссылки на скрипт
-       // ExitPoint = LevelSettings.getEntryPoints(); //получение точек выхода
-
+      
         Coords = gameObject.GetComponent<Transform>();// получение текущих координат
                
         //новое
@@ -80,7 +79,7 @@ public class Passenger : MonoBehaviour
        // generatePath();//генерируем путь
 
         MySolver<MyPathNode, System.Object> aStar = new MySolver<MyPathNode, System.Object>(LevelSettings.grid);
-        LinkedList<MyPathNode> Newpath = aStar.Search(new Vector2(6, 3), new Vector2(0, Level.Y-1), null);
+        LinkedList<MyPathNode> Newpath = aStar.Search(currentPosition+currentDirect, new Vector2(1, Level.Height-6), null);
       
         generatePath(Newpath);//генерируем путь
     }
@@ -130,6 +129,13 @@ public class Passenger : MonoBehaviour
                RotateTo(AngleForRotate(currentPosition, nextPosition , currentDirect));
                MoveBool = true;
            }
+           else
+           {
+               
+               MySolver<MyPathNode, System.Object> aStar = new MySolver<MyPathNode, System.Object>(LevelSettings.grid);
+               LinkedList<MyPathNode> Newpath = aStar.Search(currentPosition + currentDirect, (Vector2)LevelSettings.ExitPoint[0], null);
+               generatePath(Newpath);//генерируем путь
+           }
            
        }
     }
@@ -174,17 +180,26 @@ public class Passenger : MonoBehaviour
     }*/
       
     //уничтожение объектов 
-  /*  private void checkAndDestroy()
+   private void checkAndDestroy()
     {
-        for (var i = 0; i < ExitPoint.length; i++)
+     //   Debug.Log("удаление пассажира"+Math.Abs(currentPosition.x - ((Vector2)(LevelSettings.ExitPoint[0])).x));
+        
+       if ((Math.Abs(currentPosition.x - ((Vector2)(LevelSettings.ExitPoint[0])).x) < 0.01) & (Math.Abs(currentPosition.y - ((Vector2)(LevelSettings.ExitPoint[0])).y) < 0.01))
+       //if ((currentPosition.x == ((Vector2)(ExitPoint[0])).x) && (currentPosition.y == ((Vector2)(ExitPoint[0])).y))
+       {
+                Destroy(Coords.gameObject);
+                LevelSettings.deletePass();
+                Debug.Log("удаление пассажира");
+       }
+        /*for (var i = 0; i < ExitPoint.length; i++)
         {
             if ((((Vector2)ExitPoint[i]).x == getCurrentPosition().x) && (((Vector2)ExitPoint[i]).y == getCurrentPosition().y))
             {
                 Destroy(Coords.gameObject);
                 LevelSettings.deletePass();
             }
-        }
-    }*/
+        }*/
+    }
     
     private float AngleForRotate(Vector2 curPoint, Vector2 nextPoint, Vector2 curDirect)
     {
@@ -210,6 +225,7 @@ public class Passenger : MonoBehaviour
     void FixedUpdate()
     {
         MoveToRoute();
+        checkAndDestroy();
         
             /*
         else
