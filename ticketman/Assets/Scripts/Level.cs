@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using UnityEngine;
 using UnityScript.Lang;
+using System;
 
 public class Level : MonoBehaviour
 {
@@ -19,10 +20,13 @@ public class Level : MonoBehaviour
     public int scale = 2; // масштаб для стульев, позднее заменить и использовать mapscale
     private int maxcount = 25; // максимальное количество пассажиров
     private int current = 0; // текущее количество пассажиров
-    public Sprite[] headsprites; // массив голов
-    public Sprite[] bodysprites; // массив туловищ
-    public Sprite[] footsprites; // массив ног
-    public Passenger[] passList; // массив всех пассажиров
+    public Sprite[] headmsprites; // массив голов
+    public Sprite[] bodymsprites; // массив туловищ
+    public Sprite[] footmsprites; // массив ног
+    public Sprite[] headwsprites; // массив голов
+    public Sprite[] bodywsprites; // массив туловищ
+    public Sprite[] footwsprites; // массив ног
+    //public Passenger[] passList; // массив всех пассажиров
 
     //public GameObject sprite;
     public Transform brick;
@@ -30,7 +34,7 @@ public class Level : MonoBehaviour
     public Transform floor;
     public Transform person;
     public Transform back;
-    public Array entryPoints = new Array();
+    public ArrayList entryPoints;
     public ArrayList ExitPoint;//точки выхода, в которых объект уничтожается
 
     public static bool ready = false; //мы не сможем начать искать путь, пока не разместим юнитов на поле.
@@ -55,6 +59,49 @@ public class Level : MonoBehaviour
 
     public int[,] Map = new int[Width, Height]; // массив для загрузки уровня
 
+
+    public class MySolver<TPathNode, TUserContext> : SettlersEngine.SpatialAStar<TPathNode,
+   TUserContext> where TPathNode : SettlersEngine.IPathNode<TUserContext>
+    {
+        protected override Double Heuristic(PathNode inStart, PathNode inEnd)
+        {
+
+
+            int formula = GameManager.distance;
+            int dx = Math.Abs(inStart.X - inEnd.X);
+            int dy = Math.Abs(inStart.Y - inEnd.Y);
+
+            if (formula == 0)
+                return Math.Sqrt(dx * dx + dy * dy); //Euclidean distance
+
+            else if (formula == 1)
+                return (dx * dx + dy * dy); //Euclidean distance squared
+
+            else if (formula == 2)
+                return Math.Min(dx, dy); //Diagonal distance
+
+            else if (formula == 3)
+                return (dx * dy) + (dx + dy); //Manhatten distance
+
+
+
+            else
+                return Math.Abs(inStart.X - inEnd.X) + Math.Abs(inStart.Y - inEnd.Y);
+
+            //return 1*(Math.Abs(inStart.X - inEnd.X) + Math.Abs(inStart.Y - inEnd.Y) - 1); //optimized tile based Manhatten
+            //return ((dx * dx) + (dy * dy)); //Khawaja distance
+        }
+
+        protected override Double NeighborDistance(PathNode inStart, PathNode inEnd)
+        {
+            return Heuristic(inStart, inEnd);
+        }
+
+        public MySolver(TPathNode[,] inGrid)
+            : base(inGrid)
+        {
+        }
+    } 
     // Use this for initialization
     void Start()
     {
@@ -93,27 +140,63 @@ public class Level : MonoBehaviour
             }
         }
 
-
-
        // addNewPass();
         ready = true; // можем начинать искать путь
 
     }
+
+    public ArrayList generateNewPath(Vector2 startPos, Vector2 endPos)
+    {
+        MySolver<MyPathNode, System.Object> aStar = new MySolver<MyPathNode, System.Object>(grid);
+        LinkedList<MyPathNode> Newpath = aStar.Search(startPos, endPos, null);
+        ArrayList path = new ArrayList();
+        foreach (MyPathNode tempstep in Newpath)
+        {
+            path.Add(new Vector2(tempstep.X, tempstep.Y));
+        }
+        return path;
+    }
+
+    
+    void OnGUI()
+    {
+        if (GUI.Button(new Rect(0f, 100f, 200f,200f), "Create Enemy"))
+        {
+            Debug.Log("create");
+            addNewPass();
+        }
+    }
+
+        
     void LoadSourcePassenger()
     {
-        headsprites = Resources.LoadAll<Sprite>("head_m");  //Resources.LoadAll<Sprite>("Sprites");
-        bodysprites = Resources.LoadAll<Sprite>("body_m");  //Resources.LoadAll<Sprite>("Sprites");
-        footsprites = Resources.LoadAll<Sprite>("foot_m");  //Resources.LoadAll<Sprite>("Sprites");
+        headmsprites = Resources.LoadAll<Sprite>("head_m");  //Resources.LoadAll<Sprite>("Sprites");
+        bodymsprites = Resources.LoadAll<Sprite>("body_m");  //Resources.LoadAll<Sprite>("Sprites");
+        footmsprites = Resources.LoadAll<Sprite>("foot_m");  //Resources.LoadAll<Sprite>("Sprites");
+
+        headwsprites = Resources.LoadAll<Sprite>("head_w");  //Resources.LoadAll<Sprite>("Sprites");
+        bodywsprites = Resources.LoadAll<Sprite>("body_w");  //Resources.LoadAll<Sprite>("Sprites");
+        footwsprites = Resources.LoadAll<Sprite>("foot_w");  //Resources.LoadAll<Sprite>("Sprites");
         Debug.Log("Загружено голов {0}, тел {1}, ног {2}");
-        Debug.Log("Длина голов, тела, ног "+ headsprites.Length + " " + bodysprites.Length + " " + footsprites.Length);
+        Debug.Log("Длина голов, тела, ног мужики"+ headmsprites.Length + " " + bodymsprites.Length + " " + footmsprites.Length);
+        Debug.Log("Длина голов, тела, ног женщины" + headwsprites.Length + " " + bodywsprites.Length + " " + footwsprites.Length);
         //Resources.Load <Sprite> ("Sprites/Graphics_3");
     }
 
-    public void generateNewPassenger()
+    public void generateNewPassenger(bool isMan)
     {
-        person.GetComponentsInChildren<SpriteRenderer>()[0].sprite = headsprites[Random.Range(0, headsprites.Length)];
-        person.GetComponentsInChildren<SpriteRenderer>()[1].sprite = bodysprites[Random.Range(0, bodysprites.Length)];
-        person.GetComponentsInChildren<SpriteRenderer>()[2].sprite = footsprites[Random.Range(0, footsprites.Length)];
+        if (isMan)
+        {
+            person.GetComponentsInChildren<SpriteRenderer>()[0].sprite = headmsprites[UnityEngine.Random.Range(0, headmsprites.Length)];
+            person.GetComponentsInChildren<SpriteRenderer>()[1].sprite = bodymsprites[UnityEngine.Random.Range(0, bodymsprites.Length)];
+            person.GetComponentsInChildren<SpriteRenderer>()[2].sprite = footmsprites[UnityEngine.Random.Range(0, footmsprites.Length)];
+        }
+        else
+        {
+            person.GetComponentsInChildren<SpriteRenderer>()[0].sprite = headwsprites[UnityEngine.Random.Range(0, headwsprites.Length)];
+            person.GetComponentsInChildren<SpriteRenderer>()[1].sprite = bodywsprites[UnityEngine.Random.Range(0, bodywsprites.Length)];
+            person.GetComponentsInChildren<SpriteRenderer>()[2].sprite = footwsprites[UnityEngine.Random.Range(0, footwsprites.Length)];
+        }
     }
 /*
     public Passenger[] generateListPassenger()
@@ -162,8 +245,8 @@ public class Level : MonoBehaviour
     //добавление пассажиров
     private void addNewPass()
     {
-        var tempcoord = (Vector2)entryPoints[Random.Range(0, entryPoints.length)];
-        generateNewPassenger();//присвоение текстур
+        var tempcoord = (Vector2)entryPoints[UnityEngine.Random.Range(0, entryPoints.Count)];
+        generateNewPassenger(UnityEngine.Random.Range(0, 2) == 0);//присвоение текстур
         Instantiate(person, new Vector3(tempcoord.x * scale, tempcoord.y * scale, 0), Quaternion.identity);
     }
     public ArrayList getEntryPoints()
@@ -207,7 +290,7 @@ public class Level : MonoBehaviour
         Debug.Log("busstation");
         if (maxcount > current)
         {
-            for (var i = 0; i < Random.Range(0, maxcount - current); i++)
+            for (var i = 0; i < UnityEngine.Random.Range(0, maxcount - current); i++)
             {
                 addNewPass();
                 current++;

@@ -23,48 +23,7 @@ public class Passenger : MonoBehaviour
     private Vector2 nextPosition;
     private Vector2 currentDirect;
 
-    public class MySolver<TPathNode, TUserContext> : SettlersEngine.SpatialAStar<TPathNode,
-    TUserContext> where TPathNode : SettlersEngine.IPathNode<TUserContext>
-    {
-        protected override Double Heuristic(PathNode inStart, PathNode inEnd)
-        {
-
-
-            int formula = GameManager.distance;
-            int dx = Math.Abs(inStart.X - inEnd.X);
-            int dy = Math.Abs(inStart.Y - inEnd.Y);
-
-            if (formula == 0)
-                return Math.Sqrt(dx * dx + dy * dy); //Euclidean distance
-
-            else if (formula == 1)
-                return (dx * dx + dy * dy); //Euclidean distance squared
-
-            else if (formula == 2)
-                return Math.Min(dx, dy); //Diagonal distance
-
-            else if (formula == 3)
-                return (dx * dy) + (dx + dy); //Manhatten distance
-
-
-
-            else
-                return Math.Abs(inStart.X - inEnd.X) + Math.Abs(inStart.Y - inEnd.Y);
-
-            //return 1*(Math.Abs(inStart.X - inEnd.X) + Math.Abs(inStart.Y - inEnd.Y) - 1); //optimized tile based Manhatten
-            //return ((dx * dx) + (dy * dy)); //Khawaja distance
-        }
-
-        protected override Double NeighborDistance(PathNode inStart, PathNode inEnd)
-        {
-            return Heuristic(inStart, inEnd);
-        }
-
-        public MySolver(TPathNode[,] inGrid)
-            : base(inGrid)
-        {
-        }
-    } 
+   
        
     void Start()
     {
@@ -78,25 +37,11 @@ public class Passenger : MonoBehaviour
         currentDirect = Vector2.down;
        // generatePath();//генерируем путь
 
-        MySolver<MyPathNode, System.Object> aStar = new MySolver<MyPathNode, System.Object>(LevelSettings.grid);
-        LinkedList<MyPathNode> Newpath = aStar.Search(currentPosition+currentDirect, new Vector2(1, Level.Height-6), null);
-      
-        generatePath(Newpath);//генерируем путь
+        path = LevelSettings.generateNewPath(currentPosition+currentDirect,new Vector2(1, Level.Height - 6));
+   
+     //   this.GetComponent<Renderer>().material.color = Color.white;
     }
-    private ArrayList generatePath(Vector2 startPosition, Vector2 finishPosition)
-    {
-
-        ArrayList path = new ArrayList();
-        return path;
-    }
-    private int generatePath(LinkedList<MyPathNode> localpath)
-    {
-        foreach (MyPathNode tempstep in localpath)
-        {
-            path.Add(new Vector2(tempstep.X, tempstep.Y));
-        }
-        return path.Count;
-    }
+    
     private Vector2 getNewStep()
     {
         if (path.Count > 0)
@@ -131,10 +76,7 @@ public class Passenger : MonoBehaviour
            }
            else
            {
-               
-               MySolver<MyPathNode, System.Object> aStar = new MySolver<MyPathNode, System.Object>(LevelSettings.grid);
-               LinkedList<MyPathNode> Newpath = aStar.Search(currentPosition + currentDirect, (Vector2)LevelSettings.ExitPoint[0], null);
-               generatePath(Newpath);//генерируем путь
+               path = LevelSettings.generateNewPath(currentPosition + currentDirect, new Vector2(1, Level.Height - 6));
            }
            
        }
