@@ -5,15 +5,10 @@ using System.Collections.Generic;
 
 public class Passenger : MonoBehaviour
 {
-    public gridPosition currentGridPosition = new gridPosition();
-    public gridPosition startGridPosition = new gridPosition();
-    public gridPosition endGridPosition = new gridPosition();
-
-
     //старое
     public GameObject map;
     Level LevelSettings;
-    public float speed = 4.0f;
+    public float speed = 2000.0f;
     public Transform Coords; //текущие координаты
     bool MoveBool = false;
    
@@ -22,6 +17,7 @@ public class Passenger : MonoBehaviour
     private Vector2 currentPosition;
     private Vector2 nextPosition;
     private Vector2 currentDirect;
+    private bool isActive = false; 
 
    
        
@@ -37,7 +33,14 @@ public class Passenger : MonoBehaviour
         currentDirect = Vector2.down;
        // generatePath();//генерируем путь
 
-        path = LevelSettings.generateNewPath(currentPosition+currentDirect,new Vector2(1, Level.Height - 6));
+        path = LevelSettings.generateNewPath(currentPosition,new Vector2(1, Level.Height - 6));
+
+        Debug.Log("Текущая позиция"+ currentPosition);
+        foreach (Vector2 temp in path)
+        {
+            Debug.Log("ПУТЬ" + temp);
+        }
+        //Debug.Log("ПУТЬ"+path);
    
      //   this.GetComponent<Renderer>().material.color = Color.white;
     }
@@ -52,7 +55,6 @@ public class Passenger : MonoBehaviour
         }
         else
             return Vector2.zero;
-        
     }
     //получение текущих координат
     private Vector2 getCurrentPosition(Transform tempCoords)
@@ -61,24 +63,30 @@ public class Passenger : MonoBehaviour
     }
     private void MoveToRoute()
     {
-
-       if(MoveBool)
-       {
-           MoveBool = MoveToNewPoint(nextPosition);
-       }
-       else
-       {
-           nextPosition = getNewStep();
-           if (nextPosition != Vector2.zero)
-           {
-               RotateTo(AngleForRotate(currentPosition, nextPosition , currentDirect));
-               MoveBool = true;
-           }
-           else
-           {
-               path = LevelSettings.generateNewPath(currentPosition + currentDirect, new Vector2(1, Level.Height - 6));
-           }
-           
+        if(MoveBool)// движение между точками , чтобы персонажи не зависали между клетками
+        {
+            MoveBool = MoveToNewPoint(nextPosition);
+        }
+        else
+        {
+            if (LevelSettings.isMoving)// можно ли начинать новый шаг
+            {
+                nextPosition = getNewStep();
+                if (nextPosition != Vector2.zero)
+                {
+                    RotateTo(AngleForRotate(currentPosition, nextPosition, currentDirect));
+                    MoveBool = true;
+                }
+                else
+                {
+                    path = LevelSettings.generateNewPath(currentPosition, (Vector2)LevelSettings.ExitPoint[0]);
+                    Debug.Log("Новая Текущая позиция" + currentPosition);
+                    foreach (Vector2 temp in path)
+                    {
+                        Debug.Log("Новый " + temp);
+                    }
+                }
+            }
        }
     }
     private bool MoveToNewPoint(Vector2 newPosition, int step = 1, double error = 0.01)
@@ -102,25 +110,7 @@ public class Passenger : MonoBehaviour
         return speed * Time.deltaTime;
     }
   
-/*
-   void MoveTo(Vector2 direction, int step=1, double error = 0.01)
-    {
-        
-        tempstep += MoveStep(direction, speed);
-       
-        if ((step * LevelSettings.scale - tempstep <0.1)&&(Math.Abs(nextPosition.x - (Coords.position.x / LevelSettings.scale))<error) & (Math.Abs(nextPosition.y - (Coords.position.y / LevelSettings.scale))<error))
-        {
-            currentDirect = nextPosition - currentPosition;
-            currentPosition = nextPosition;
-            nextPosition = getNewStep();
-            
-            oldmove = false;
-            tempstep = 0;
-        }
-       
-
-    }*/
-      
+    
     //уничтожение объектов 
    private void checkAndDestroy()
     {
@@ -162,7 +152,24 @@ public class Passenger : MonoBehaviour
     {
    
     }
+    void OnMouseDown()
+    {
+        isActive = !isActive;
 
+        if (isActive)
+        {
+            this.GetComponentsInChildren<SpriteRenderer>()[0].material.color = Color.blue;
+            this.GetComponentsInChildren<SpriteRenderer>()[1].material.color = Color.blue;
+            this.GetComponentsInChildren<SpriteRenderer>()[2].material.color = Color.blue;
+        }
+        else
+        {
+            this.GetComponentsInChildren<SpriteRenderer>()[0].material.color = Color.white;
+            this.GetComponentsInChildren<SpriteRenderer>()[1].material.color = Color.white;
+            this.GetComponentsInChildren<SpriteRenderer>()[2].material.color = Color.white;
+        }
+     
+    }
     // Update is called once per frame
     void FixedUpdate()
     {
@@ -234,19 +241,5 @@ public class Passenger : MonoBehaviour
             coll.gameObject.SendMessage("ApplyDamage", 10);
         */
     }
-    public class gridPosition
-    {
-        public int x = 0;
-        public int y = 0;
-
-        public gridPosition()
-        {
-        }
-
-        public gridPosition(int x, int y)
-        {
-            this.x = x;
-            this.y = y;
-        }
-    };
+   
 }

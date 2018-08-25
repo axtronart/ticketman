@@ -7,8 +7,8 @@ using System;
 
 public class Level : MonoBehaviour
 {
+    public bool isMoving = false; //можно ли двигаться персонажам
     public MyPathNode[,] grid;
-
     //public int enemyNumber = 6, playerNumber = 3; //public для возможности редактировать через инспектор 
     //public static int X, Y; // ширина и высота поля
     public static int Width = 8;
@@ -18,7 +18,7 @@ public class Level : MonoBehaviour
    // private int height = 14; // количество клеток в высоту
    // private int width = 7; // количество клеток в ширину
     public int scale = 2; // масштаб для стульев, позднее заменить и использовать mapscale
-    private int maxcount = 25; // максимальное количество пассажиров
+    private int maxcount = 1; // максимальное количество пассажиров
     private int current = 0; // текущее количество пассажиров
     public Sprite[] headmsprites; // массив голов
     public Sprite[] bodymsprites; // массив туловищ
@@ -41,7 +41,7 @@ public class Level : MonoBehaviour
 
     //1-непроходимая точка
     public static int[,] mapArrTemp = {
-      {1,1,1,1,1,1,1,1},
+      {1,1,1,1,1,1,1,4},
       {1,2,2,0,2,2,1,4},
       {1,2,2,0,0,0,0,4},
       {1,2,2,0,2,2,1,4},
@@ -49,12 +49,12 @@ public class Level : MonoBehaviour
       {1,2,2,0,2,2,1,4},
       {1,2,2,0,2,2,1,4},
       {1,2,2,0,2,2,1,4},
+      {1,2,2,0,0,0,0,4},
+      {1,2,2,0,0,0,1,4},
+      {1,2,2,0,0,0,1,4},
       {1,2,2,0,0,0,0,4},
       {1,2,2,2,2,2,1,4},
-      {1,1,1,1,1,1,1,4},
-      {1,1,1,1,1,1,1,4},
       {1,1,1,1,1,1,1,5},
-      {1,1,1,1,1,1,1,1},
 };
 
     public int[,] Map = new int[Width, Height]; // массив для загрузки уровня
@@ -65,8 +65,6 @@ public class Level : MonoBehaviour
     {
         protected override Double Heuristic(PathNode inStart, PathNode inEnd)
         {
-
-
             int formula = GameManager.distance;
             int dx = Math.Abs(inStart.X - inEnd.X);
             int dy = Math.Abs(inStart.Y - inEnd.Y);
@@ -82,8 +80,6 @@ public class Level : MonoBehaviour
 
             else if (formula == 3)
                 return (dx * dy) + (dx + dy); //Manhatten distance
-
-
 
             else
                 return Math.Abs(inStart.X - inEnd.X) + Math.Abs(inStart.Y - inEnd.Y);
@@ -105,9 +101,6 @@ public class Level : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-       
-
-
         //Получение точек, в которых будут появляться пассажиры
         entryPoints = getEntryPoints();
 
@@ -154,6 +147,7 @@ public class Level : MonoBehaviour
         {
             path.Add(new Vector2(tempstep.X, tempstep.Y));
         }
+        path.RemoveAt(0);//удаляем первый элемент, потому что он равен текущей позиции
         return path;
     }
 
@@ -164,6 +158,11 @@ public class Level : MonoBehaviour
         {
             Debug.Log("create");
             addNewPass();
+        }
+        if (GUI.Button(new Rect(0f, 300f, 200f, 200f), "Move"))
+        {
+            Debug.Log("move");
+            isMoving = !isMoving;
         }
     }
 
@@ -182,12 +181,13 @@ public class Level : MonoBehaviour
         Debug.Log("Длина голов, тела, ног женщины" + headwsprites.Length + " " + bodywsprites.Length + " " + footwsprites.Length);
         //Resources.Load <Sprite> ("Sprites/Graphics_3");
     }
-
+    // вариант рабочий надо будет раскомментировать если не получится с цветами
     public void generateNewPassenger(bool isMan)
     {
         if (isMan)
         {
             person.GetComponentsInChildren<SpriteRenderer>()[0].sprite = headmsprites[UnityEngine.Random.Range(0, headmsprites.Length)];
+            //person.GetComponentsInChildren<SpriteRenderer>()[0].sharedMaterial.color = Color.blue;
             person.GetComponentsInChildren<SpriteRenderer>()[1].sprite = bodymsprites[UnityEngine.Random.Range(0, bodymsprites.Length)];
             person.GetComponentsInChildren<SpriteRenderer>()[2].sprite = footmsprites[UnityEngine.Random.Range(0, footmsprites.Length)];
         }
@@ -197,6 +197,15 @@ public class Level : MonoBehaviour
             person.GetComponentsInChildren<SpriteRenderer>()[1].sprite = bodywsprites[UnityEngine.Random.Range(0, bodywsprites.Length)];
             person.GetComponentsInChildren<SpriteRenderer>()[2].sprite = footwsprites[UnityEngine.Random.Range(0, footwsprites.Length)];
         }
+    }
+  /*  public void generateNewPassenger(bool isMan)
+    {
+
+        person.GetComponentsInChildren<SpriteRenderer>()[0].sprite = headmsprites[UnityEngine.Random.Range(0, headmsprites.Length)];
+       // person.GetComponentsInChildren<SpriteRenderer>()[0].sharedMaterial.color = Color.red;
+        person.GetComponentsInChildren<SpriteRenderer>()[1].sprite = bodymsprites[UnityEngine.Random.Range(0, bodymsprites.Length)];
+        person.GetComponentsInChildren<SpriteRenderer>()[2].sprite = footmsprites[UnityEngine.Random.Range(0, footmsprites.Length)];
+        
     }
 /*
     public Passenger[] generateListPassenger()
@@ -219,9 +228,7 @@ public class Level : MonoBehaviour
             for (int y = 0; y < Height; y++)    
             {
                 Map[x, y] = mapArrTemp[y, x];
-                //Debug.Log("X="+x +"Y="+y);
-                //Debug.Log(mapArr[y, x]);
-                
+                 
                 if (Map[x, y] == 0)
                 {
                     Instantiate(brick, new Vector2(x * scale, y * scale), Quaternion.identity);
@@ -249,6 +256,7 @@ public class Level : MonoBehaviour
         generateNewPassenger(UnityEngine.Random.Range(0, 2) == 0);//присвоение текстур
         Instantiate(person, new Vector3(tempcoord.x * scale, tempcoord.y * scale, 0), Quaternion.identity);
     }
+
     public ArrayList getEntryPoints()
     {
         var arr = new ArrayList();
@@ -302,9 +310,6 @@ public class Level : MonoBehaviour
     {
         current--;
     }
-
-
-   
 }
 
 
