@@ -27,6 +27,7 @@ public class Passenger : MonoBehaviour
         LevelSettings = map.GetComponent<Level>(); //получение ссылки на скрипт
       
         Coords = gameObject.GetComponent<Transform>();// получение текущих координат
+        Coords.transform.localScale=new Vector3(2,2,2);
                
         //новое
         currentPosition = getCurrentPosition(Coords); // сохраняем текущую позицию
