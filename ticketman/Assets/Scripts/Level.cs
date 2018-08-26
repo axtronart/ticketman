@@ -9,16 +9,18 @@ public class Level : MonoBehaviour
 {
     public bool isMoving = false; //можно ли двигаться персонажам
     public MyPathNode[,] grid;
+    public List<MyPathNode> target;// массив точек для конечного пункта
+    //public List<MyPathNode> targetForNextStep;// массив точек для конечного пункта
     //public int enemyNumber = 6, playerNumber = 3; //public для возможности редактировать через инспектор 
     //public static int X, Y; // ширина и высота поля
-    public static int Width = 8;
-    public static int Height = 14;
+    public static int Width = 9;
+    public static int Height = 15;
     
     public int mapScale = 128; // количество пикселей в одной клетке
    // private int height = 14; // количество клеток в высоту
    // private int width = 7; // количество клеток в ширину
     public int scale = 2; // масштаб для стульев, позднее заменить и использовать mapscale
-    private int maxcount = 1; // максимальное количество пассажиров
+    private int maxcount = 25; // максимальное количество пассажиров
     private int current = 0; // текущее количество пассажиров
     public Sprite[] headmsprites; // массив голов
     public Sprite[] bodymsprites; // массив туловищ
@@ -41,20 +43,21 @@ public class Level : MonoBehaviour
 
     //1-непроходимая точка
     public static int[,] mapArrTemp = {
-      {1,1,1,1,1,1,1,4},
-      {1,2,2,0,2,2,1,4},
-      {1,2,2,0,0,0,0,4},
-      {1,2,2,0,2,2,1,4},
-      {1,2,2,0,2,2,1,4},
-      {1,2,2,0,2,2,1,4},
-      {1,2,2,0,2,2,1,4},
-      {1,2,2,0,2,2,1,4},
-      {1,2,2,0,0,0,0,4},
-      {1,2,2,0,0,0,1,4},
-      {1,2,2,0,0,0,1,4},
-      {1,2,2,0,0,0,0,4},
-      {1,2,2,2,2,2,1,4},
-      {1,1,1,1,1,1,1,5},
+      {1,1,1,1,1,1,1,4,4},
+      {1,2,2,0,2,2,1,4,4},
+      {1,2,2,0,2,2,0,4,4},
+      {1,2,2,0,0,0,0,4,4},
+      {1,2,2,0,2,2,1,1,1},
+      {1,2,2,0,2,2,1,4,4},
+      {1,2,2,0,2,2,1,4,4},
+      {1,2,2,0,2,2,1,4,4},
+      {1,2,2,0,2,2,0,4,4},
+      {1,2,2,0,0,0,0,4,4},
+      {1,2,2,0,0,0,1,1,1},
+      {1,2,2,0,0,0,1,4,4},
+      {1,2,2,0,0,0,0,4,4},
+      {1,2,2,2,2,2,0,4,4},
+      {1,1,1,1,1,1,1,4,5},
 };
 
     public int[,] Map = new int[Width, Height]; // массив для загрузки уровня
@@ -117,7 +120,8 @@ public class Level : MonoBehaviour
 
         //Generate a grid - nodes according to the specified size
         grid = new MyPathNode[Width, Height];
-
+        target = new List<MyPathNode>();
+       // targetForNextStep = new List<MyPathNode>();
         for (int x = 0; x < Width; x++)
         {
             for (int y = 0; y < Height; y++)
@@ -130,6 +134,14 @@ public class Level : MonoBehaviour
                     X = x,
                     Y = y,
                 };
+
+                if ((Map[x, y] != 1)&&(Map[x, y] != 4))
+                {
+                    target.Add(grid[x, y]);
+                  //  targetForNextStep.Add(grid[x, y]);
+                }
+                    
+
             }
         }
 
@@ -143,17 +155,37 @@ public class Level : MonoBehaviour
         MySolver<MyPathNode, System.Object> aStar = new MySolver<MyPathNode, System.Object>(grid);
         LinkedList<MyPathNode> Newpath = aStar.Search(startPos, endPos, null);
         ArrayList path = new ArrayList();
-        foreach (MyPathNode tempstep in Newpath)
+
+        if (Newpath != null)
         {
-            path.Add(new Vector2(tempstep.X, tempstep.Y));
+            foreach (MyPathNode tempstep in Newpath)
+            {
+                path.Add(new Vector2(tempstep.X, tempstep.Y));
+            }
+            path.RemoveAt(0);//удаляем первый элемент, потому что он равен текущей позиции
         }
-        path.RemoveAt(0);//удаляем первый элемент, потому что он равен текущей позиции
+        else
+            path.Add(Vector2.zero);
         return path;
+    }
+
+    public Vector2 generatePosition()//массив точек куда могут вообще сесть пассажиры
+    {
+        var temp = UnityEngine.Random.Range(0, target.Count);
+        var tempV = new Vector2(target[temp].X, target[temp].Y);
+       // target.RemoveAt(temp);
+        return tempV;
     }
 
     
     void OnGUI()
     {
+        var style = new GUIStyle();
+        style.fontSize = 100;
+        style.normal.textColor = Color.red;
+        style.fontStyle = FontStyle.Bold;
+        
+
         if (GUI.Button(new Rect(0f, 100f, 200f,200f), "Create Enemy"))
         {
             Debug.Log("create");
@@ -164,6 +196,11 @@ public class Level : MonoBehaviour
             Debug.Log("move");
             isMoving = !isMoving;
         }
+        GUI.Label(new Rect(0f, 300f, 200f, 200f), current.ToString(),style);
+        GUI.Label(new Rect(10, 10, 100, 20), maxcount.ToString(),style);
+        
+        
+        
     }
 
         
@@ -253,8 +290,13 @@ public class Level : MonoBehaviour
     private void addNewPass()
     {
         var tempcoord = (Vector2)entryPoints[UnityEngine.Random.Range(0, entryPoints.Count)];
-        generateNewPassenger(UnityEngine.Random.Range(0, 2) == 0);//присвоение текстур
-        Instantiate(person, new Vector3(tempcoord.x * scale, tempcoord.y * scale, 0), Quaternion.identity);
+        if (!grid[(int)tempcoord.x,(int)tempcoord.y].IsWall) 
+        {
+            generateNewPassenger(UnityEngine.Random.Range(0, 2) == 0);//присвоение текстур
+            Instantiate(person, new Vector3(tempcoord.x * scale, tempcoord.y * scale, 0), Quaternion.identity);
+            current++;
+        }
+        
     }
 
     public ArrayList getEntryPoints()
@@ -301,7 +343,7 @@ public class Level : MonoBehaviour
             for (var i = 0; i < UnityEngine.Random.Range(0, maxcount - current); i++)
             {
                 addNewPass();
-                current++;
+                
             }
         }
 

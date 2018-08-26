@@ -17,7 +17,8 @@ public class Passenger : MonoBehaviour
     private Vector2 currentPosition;
     private Vector2 nextPosition;
     private Vector2 currentDirect;
-    private bool isActive = false; 
+    private bool isActive = false;
+    int countOfStand = 0;
 
    
        
@@ -34,16 +35,16 @@ public class Passenger : MonoBehaviour
         currentDirect = Vector2.down;
        // generatePath();//генерируем путь
 
-        path = LevelSettings.generateNewPath(currentPosition,new Vector2(1, Level.Height - 6));
+        LevelSettings.grid[(int)currentPosition.x,(int)currentPosition.y].IsWall = true;
+
+        path = LevelSettings.generateNewPath(currentPosition, LevelSettings.generatePosition());
 
         Debug.Log("Текущая позиция"+ currentPosition);
         foreach (Vector2 temp in path)
         {
             Debug.Log("ПУТЬ" + temp);
         }
-        //Debug.Log("ПУТЬ"+path);
-   
-     //   this.GetComponent<Renderer>().material.color = Color.white;
+     
     }
     
     private Vector2 getNewStep()
@@ -51,8 +52,15 @@ public class Passenger : MonoBehaviour
         if (path.Count > 0)
         {
             Vector2 temp = (Vector2)path[0];
-            path.RemoveAt(0);
-            return temp;
+            if  (LevelSettings.grid[(int)temp.x,(int)temp.y].IsWall)
+            {
+                return Vector2.zero;
+            }
+            else
+            {
+                path.RemoveAt(0);
+                return temp;
+            }
         }
         else
             return Vector2.zero;
@@ -77,15 +85,13 @@ public class Passenger : MonoBehaviour
                 {
                     RotateTo(AngleForRotate(currentPosition, nextPosition, currentDirect));
                     MoveBool = true;
+                    LevelSettings.grid[(int)currentPosition.x, (int)currentPosition.y].IsWall = false;
+                    LevelSettings.grid[(int)nextPosition.x, (int)nextPosition.y].IsWall = true;
                 }
                 else
                 {
                     path = LevelSettings.generateNewPath(currentPosition, (Vector2)LevelSettings.ExitPoint[0]);
-                    Debug.Log("Новая Текущая позиция" + currentPosition);
-                    foreach (Vector2 temp in path)
-                    {
-                        Debug.Log("Новый " + temp);
-                    }
+                  
                 }
             }
        }
@@ -123,6 +129,8 @@ public class Passenger : MonoBehaviour
                 Destroy(Coords.gameObject);
                 LevelSettings.deletePass();
                 Debug.Log("удаление пассажира");
+                LevelSettings.grid[(int)currentPosition.x, (int)currentPosition.y].IsWall = false;
+           
        }
         /*for (var i = 0; i < ExitPoint.length; i++)
         {
@@ -143,12 +151,7 @@ public class Passenger : MonoBehaviour
     {
         transform.Rotate(Vector3.forward, Angle);
     }
-    /*void ChangeHead()
-    {
-        SpriteRenderer sp = new SpriteRenderer();
-        sp.material.SetTexture("Left", new Texture());
-
-    }*/
+  
     void Update()
     {
    
@@ -159,9 +162,9 @@ public class Passenger : MonoBehaviour
 
         if (isActive)
         {
-            this.GetComponentsInChildren<SpriteRenderer>()[0].material.color = Color.blue;
-            this.GetComponentsInChildren<SpriteRenderer>()[1].material.color = Color.blue;
-            this.GetComponentsInChildren<SpriteRenderer>()[2].material.color = Color.blue;
+            this.GetComponentsInChildren<SpriteRenderer>()[0].material.color = new Color(0.70f, 0.70f, 0.70f);
+            this.GetComponentsInChildren<SpriteRenderer>()[1].material.color = new Color(0.70f, 0.70f, 0.70f);
+            this.GetComponentsInChildren<SpriteRenderer>()[2].material.color = new Color(0.70f, 0.70f, 0.70f);
         }
         else
         {
