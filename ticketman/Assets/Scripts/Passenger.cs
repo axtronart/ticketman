@@ -18,6 +18,7 @@ public class Passenger : MonoBehaviour
     private Vector2 nextPosition;
     private Vector2 currentDirect;
     private bool isActive = false;
+    public bool inBus = false;
     int countOfStand = 0;
 
    
@@ -80,6 +81,7 @@ public class Passenger : MonoBehaviour
         {
             if (LevelSettings.isMoving)// можно ли начинать новый шаг
             {
+                
                 nextPosition = getNewStep();
                 if (nextPosition != Vector2.zero)
                 {
@@ -90,8 +92,16 @@ public class Passenger : MonoBehaviour
                 }
                 else
                 {
-                    path = LevelSettings.generateNewPath(currentPosition, (Vector2)LevelSettings.ExitPoint[0]);
-                  
+                    if (countOfStand >4)//чтоб пассажиры не бежали сразу на выход
+                    {
+                        path = LevelSettings.generateNewPath(currentPosition, LevelSettings.generateExitPoint());
+                        countOfStand = 0;
+                    }
+                    else
+                    {
+                        path = LevelSettings.generateNewPath(currentPosition, LevelSettings.generatePosition());
+                        countOfStand++;
+                    }
                 }
             }
        }
@@ -121,25 +131,19 @@ public class Passenger : MonoBehaviour
     //уничтожение объектов 
    private void checkAndDestroy()
     {
-     //   Debug.Log("удаление пассажира"+Math.Abs(currentPosition.x - ((Vector2)(LevelSettings.ExitPoint[0])).x));
-        
-       if ((Math.Abs(currentPosition.x - ((Vector2)(LevelSettings.ExitPoint[0])).x) < 0.01) & (Math.Abs(currentPosition.y - ((Vector2)(LevelSettings.ExitPoint[0])).y) < 0.01))
-       //if ((currentPosition.x == ((Vector2)(ExitPoint[0])).x) && (currentPosition.y == ((Vector2)(ExitPoint[0])).y))
+       float error = 0.01f;
+       for (int i = 0; i < LevelSettings.exitPoints.Count;i++ )
        {
+           if ((Math.Abs(currentPosition.x - ((Vector2)(LevelSettings.exitPoints[i])).x) < error) & (Math.Abs(currentPosition.y - ((Vector2)(LevelSettings.exitPoints[i])).y) < error))
+            //if ((currentPosition.x == ((Vector2)(ExitPoint[0])).x) && (currentPosition.y == ((Vector2)(ExitPoint[0])).y))
+            {
                 Destroy(Coords.gameObject);
                 LevelSettings.deletePass();
                 Debug.Log("удаление пассажира");
                 LevelSettings.grid[(int)currentPosition.x, (int)currentPosition.y].IsWall = false;
-           
-       }
-        /*for (var i = 0; i < ExitPoint.length; i++)
-        {
-            if ((((Vector2)ExitPoint[i]).x == getCurrentPosition().x) && (((Vector2)ExitPoint[i]).y == getCurrentPosition().y))
-            {
-                Destroy(Coords.gameObject);
-                LevelSettings.deletePass();
+
             }
-        }*/
+        }
     }
     
     private float AngleForRotate(Vector2 curPoint, Vector2 nextPoint, Vector2 curDirect)

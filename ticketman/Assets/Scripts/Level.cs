@@ -7,6 +7,8 @@ using System;
 
 public class Level : MonoBehaviour
 {
+    public Animator road;
+    public Animator busstop;
     public bool isMoving = false; //можно ли двигаться персонажам
     public MyPathNode[,] grid;
     public List<MyPathNode> target;// массив точек для конечного пункта
@@ -37,27 +39,27 @@ public class Level : MonoBehaviour
     public Transform person;
     public Transform back;
     public ArrayList entryPoints;
-    public ArrayList ExitPoint;//точки выхода, в которых объект уничтожается
+    public ArrayList exitPoints;//точки выхода, в которых объект уничтожается
 
-    public static bool ready = false; //мы не сможем начать искать путь, пока не разместим юнитов на поле.
-
+    public bool isStation = true; // переменная указывает что автобус стоит на станции 
+  
     //1-непроходимая точка
     public static int[,] mapArrTemp = {
-      {1,1,1,1,1,1,1,4,4},
+      {1,1,1,1,1,1,1,5,5},
       {1,2,2,0,2,2,1,4,4},
       {1,2,2,0,2,2,0,4,4},
       {1,2,2,0,0,0,0,4,4},
-      {1,2,2,0,2,2,1,1,1},
+      {1,2,2,0,2,2,1,4,4},
       {1,2,2,0,2,2,1,4,4},
       {1,2,2,0,2,2,1,4,4},
       {1,2,2,0,2,2,1,4,4},
       {1,2,2,0,2,2,0,4,4},
       {1,2,2,0,0,0,0,4,4},
-      {1,2,2,0,0,0,1,1,1},
+      {1,2,2,0,0,0,1,4,4},
       {1,2,2,0,0,0,1,4,4},
       {1,2,2,0,0,0,0,4,4},
       {1,2,2,2,2,2,0,4,4},
-      {1,1,1,1,1,1,1,4,5},
+      {1,1,1,1,1,1,1,5,5},
 };
 
     public int[,] Map = new int[Width, Height]; // массив для загрузки уровня
@@ -104,24 +106,76 @@ public class Level : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        //Получение точек, в которых будут появляться пассажиры
-        entryPoints = getEntryPoints();
-
-        ExitPoint = getExitPoints(); //получение точек выхода
-
-        Debug.Log("entrypoints" + entryPoints);
-                
-        //создание внутренностей автобуса
-        createBusFromMap();
-        //запуск функции добавления пассажиров
-        InvokeRepeating("busstation", 0, 5);// закомментировал для отладки пути
         //загрузка ресурсов 
         LoadSourcePassenger();
+        //создание внутренностей автобуса
+       // createBusFromMap();
+        //создание матрицы автобуса
+        createPathMatrix();
+        //получение точек, в которых будут появляться пассажиры
+        entryPoints = getEntryPoints();
+        //получение точек выхода
+        exitPoints = getExitPoints(); 
+        //запуск функции добавления пассажиров
+        //InvokeRepeating("busstation", 0, 5);// закомментировал для отладки пути
+        road = GameObject.Find("Bus").GetComponent<Animator>();
+        road.speed = 0;
+        busstop = GameObject.Find("busstop").GetComponent<Animator>();
+        busstop.speed = 1;
+        isMoving = true;
+        InvokeRepeating("changeIsStation", 0, 5);// закомментировал для отладки пути
+    }
 
+   
+    public void movingBus()
+    {
+        if (!isStation)
+        {
+            busmovieanimation();
+        }
+    }
+    public void boardingBus()
+    {
+        if (isStation)
+        {
+            busstation();//
+        }
+    }
+    private void changeIsStation()
+    {
+        isStation = !isStation;
+        busstop.speed = 1;
+    }
+    private void busmovieanimation()
+    {
+        road.speed = 1;
+    }
+
+    private void busstation()
+    {
+        Debug.Log("busstation");
+        road.speed = 0;
+        if (maxcount > current)
+        {
+            for (var i = 0; i < UnityEngine.Random.Range(0, maxcount - current); i++)
+            {
+                addNewPass();
+            }
+        }
+
+    }
+    void FixedUpdate()
+    {
+       // boardingBus();
+       // movingBus();
+    }
+
+    public void createPathMatrix()
+    {
         //Generate a grid - nodes according to the specified size
         grid = new MyPathNode[Width, Height];
         target = new List<MyPathNode>();
-       // targetForNextStep = new List<MyPathNode>();
+        // targetForNextStep = new List<MyPathNode>();
         for (int x = 0; x < Width; x++)
         {
             for (int y = 0; y < Height; y++)
@@ -135,19 +189,13 @@ public class Level : MonoBehaviour
                     Y = y,
                 };
 
-                if ((Map[x, y] != 1)&&(Map[x, y] != 4))
+                if ((Map[x, y] != 1) && (Map[x, y] != 4))
                 {
                     target.Add(grid[x, y]);
-                  //  targetForNextStep.Add(grid[x, y]);
+                    //  targetForNextStep.Add(grid[x, y]);
                 }
-                    
-
             }
         }
-
-       // addNewPass();
-        ready = true; // можем начинать искать путь
-
     }
 
     public ArrayList generateNewPath(Vector2 startPos, Vector2 endPos)
@@ -177,6 +225,12 @@ public class Level : MonoBehaviour
         return tempV;
     }
 
+    public Vector2 generateExitPoint()
+    {
+        var temp = UnityEngine.Random.Range(0, exitPoints.Count);
+        return (Vector2)exitPoints[temp];
+    }
+
     
     void OnGUI()
     {
@@ -186,20 +240,27 @@ public class Level : MonoBehaviour
         style.fontStyle = FontStyle.Bold;
         
 
-        if (GUI.Button(new Rect(0f, 100f, 200f,200f), "Create Enemy"))
+        if (GUI.Button(new Rect(0f, 100f, 200f,200f), "Create Enemy",style))
         {
             Debug.Log("create");
             addNewPass();
         }
-        if (GUI.Button(new Rect(0f, 300f, 200f, 200f), "Move"))
+        if (GUI.Button(new Rect(0f, 300f, 200f, 200f), "Move",style))
         {
             Debug.Log("move");
             isMoving = !isMoving;
         }
+        if (GUI.Button(new Rect(0f, 500f, 200f, 200f), "Pause",style))
+        {
+            road.speed = 0;
+        }
+        if (GUI.Button(new Rect(0f, 700f, 200f, 200f), "Play",style))
+        {
+            road.speed = 1;
+        }
         GUI.Label(new Rect(0f, 300f, 200f, 200f), current.ToString(),style);
         GUI.Label(new Rect(10, 10, 100, 20), maxcount.ToString(),style);
-        
-        
+
         
     }
 
@@ -280,8 +341,6 @@ public class Level : MonoBehaviour
                                {
                                    Instantiate(chair, new Vector2(x * scale, y * scale), Quaternion.identity);
                                }
-                               else
-                                   Instantiate(chair, new Vector2(x * scale, y * scale), Quaternion.identity);
             }
         }
     }
@@ -334,20 +393,7 @@ public class Level : MonoBehaviour
         return arr;
     }
 
-    //Добавление новых персонажей
-    private void busstation()
-    {
-        Debug.Log("busstation");
-        if (maxcount > current)
-        {
-            for (var i = 0; i < UnityEngine.Random.Range(0, maxcount - current); i++)
-            {
-                addNewPass();
-                
-            }
-        }
-
-    }
+  
     public void deletePass()
     {
         current--;
