@@ -7,9 +7,11 @@ using System;
 
 public class Level : MonoBehaviour
 {
+    public int money; //количество денег
+    public int fuel; // количество бензина
     public Animator road;
     public Animator busstop;
-    public bool isMoving = false; //можно ли двигаться персонажам
+    public bool isMoving; //можно ли двигаться персонажам
     public MyPathNode[,] grid;
     public List<MyPathNode> target;// массив точек для конечного пункта
     //public List<MyPathNode> targetForNextStep;// массив точек для конечного пункта
@@ -106,6 +108,8 @@ public class Level : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        money = 100;
+        fuel = 100;
         //загрузка ресурсов 
         LoadSourcePassenger();
         //создание внутренностей автобуса
@@ -118,56 +122,44 @@ public class Level : MonoBehaviour
         exitPoints = getExitPoints(); 
         //запуск функции добавления пассажиров
         //InvokeRepeating("busstation", 0, 5);// закомментировал для отладки пути
-        road = GameObject.Find("Bus").GetComponent<Animator>();
-        road.speed = 0;
-        busstop = GameObject.Find("busstop").GetComponent<Animator>();
-        busstop.speed = 1;
-        isMoving = true;
-        InvokeRepeating("changeIsStation", 0, 5);// закомментировал для отладки пути
+        road = GameObject.Find("road").GetComponent<Animator>();
+        //road.speed = 0;
+       /* busstop = GameObject.Find("busstop").GetComponent<Animator>();
+        busstop.speed = 0;*/
+        isMoving = false;
+        isStation = false;
+        Invoke("boardingBus", 5);// Через 5 секунд паркуемся
+       // InvokeRepeating("boardingBus", 5, 10);// закомментировал для отладки пути
+        
+        //InvokeRepeating("movingBus", 15, 10);
     }
-
    
     public void movingBus()
     {
-        if (!isStation)
-        {
-            busmovieanimation();
-        }
-    }
-    public void boardingBus()
-    {
-        if (isStation)
-        {
-            busstation();//
-        }
-    }
-    private void changeIsStation()
-    {
-        isStation = !isStation;
-        busstop.speed = 1;
-    }
-    private void busmovieanimation()
-    {
-        road.speed = 1;
+        isStation = false;
+        road.SetInteger("State", 2);
     }
 
-    private void busstation()
+    public void boardingBus()
     {
-        Debug.Log("busstation");
-        road.speed = 0;
+        isMoving = true;
+        isStation = true;
+        road.SetInteger("State", 1);
+        
         if (maxcount > current)
         {
-            for (var i = 0; i < UnityEngine.Random.Range(0, maxcount - current); i++)
+           // for (var i = 0; i < UnityEngine.Random.Range(0, maxcount - current); i++)//закомментировал, пока добавляется только один человек
             {
                 addNewPass();
             }
         }
-
+        fuel-=5;
     }
+    
+  
     void FixedUpdate()
     {
-       // boardingBus();
-       // movingBus();
+       
     }
 
     public void createPathMatrix()
@@ -234,34 +226,35 @@ public class Level : MonoBehaviour
     
     void OnGUI()
     {
+        //Переменные для размещения меню
         var style = new GUIStyle();
-        style.fontSize = 100;
+        style.fontSize = 70;
         style.normal.textColor = Color.red;
         style.fontStyle = FontStyle.Bold;
-        
 
-        if (GUI.Button(new Rect(0f, 100f, 200f,200f), "Create Enemy",style))
+        float X = 0;
+        float Y = 200;
+        float width = Y;
+        float height = 200;
+
+
+        GUI.Label(new Rect(X, Y * 0, width, height), "Сейчас = " + current.ToString(), style);
+        GUI.Label(new Rect(X, Y * 1, width, height), "Всего = " + maxcount.ToString(), style);
+        GUI.Label(new Rect(X, Y * 2, width, height), "Денег = " + money.ToString(), style);
+        GUI.Label(new Rect(X, Y * 3, width, height), "Бензин = " + fuel.ToString(), style);
+
+
+
+        if (GUI.Button(new Rect(X, Y * 4, width, height), "Добавить пассажира", style))
         {
             Debug.Log("create");
             addNewPass();
         }
-        if (GUI.Button(new Rect(0f, 300f, 200f, 200f), "Move",style))
+        if (GUI.Button(new Rect(X, Y * 5, width, height), "Move = "+ isMoving.ToString(), style))
         {
             Debug.Log("move");
             isMoving = !isMoving;
         }
-        if (GUI.Button(new Rect(0f, 500f, 200f, 200f), "Pause",style))
-        {
-            road.speed = 0;
-        }
-        if (GUI.Button(new Rect(0f, 700f, 200f, 200f), "Play",style))
-        {
-            road.speed = 1;
-        }
-        GUI.Label(new Rect(0f, 300f, 200f, 200f), current.ToString(),style);
-        GUI.Label(new Rect(10, 10, 100, 20), maxcount.ToString(),style);
-
-        
     }
 
         
@@ -296,15 +289,7 @@ public class Level : MonoBehaviour
             person.GetComponentsInChildren<SpriteRenderer>()[2].sprite = footwsprites[UnityEngine.Random.Range(0, footwsprites.Length)];
         }
     }
-  /*  public void generateNewPassenger(bool isMan)
-    {
-
-        person.GetComponentsInChildren<SpriteRenderer>()[0].sprite = headmsprites[UnityEngine.Random.Range(0, headmsprites.Length)];
-       // person.GetComponentsInChildren<SpriteRenderer>()[0].sharedMaterial.color = Color.red;
-        person.GetComponentsInChildren<SpriteRenderer>()[1].sprite = bodymsprites[UnityEngine.Random.Range(0, bodymsprites.Length)];
-        person.GetComponentsInChildren<SpriteRenderer>()[2].sprite = footmsprites[UnityEngine.Random.Range(0, footmsprites.Length)];
-        
-    }
+  
 /*
     public Passenger[] generateListPassenger()
     {
