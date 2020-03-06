@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using UnityEngine;
-using UnityScript.Lang;
 using System;
 
 public class Level : MonoBehaviour
@@ -123,37 +122,48 @@ public class Level : MonoBehaviour
         //запуск функции добавления пассажиров
         //InvokeRepeating("busstation", 0, 5);// закомментировал для отладки пути
         road = GameObject.Find("road").GetComponent<Animator>();
-        //road.speed = 0;
-       /* busstop = GameObject.Find("busstop").GetComponent<Animator>();
-        busstop.speed = 0;*/
-        isMoving = false;
-        isStation = false;
-        Invoke("boardingBus", 5);// Через 5 секунд паркуемся
+        
+        Invoke("startingBus",1);
+        
        // InvokeRepeating("boardingBus", 5, 10);// закомментировал для отладки пути
         
         //InvokeRepeating("movingBus", 15, 10);
+        
     }
-   
+
+    public void startingBus()
+    {
+        isMoving = true;
+        isStation = false;
+        Invoke("movingBus", 1);
+    }
     public void movingBus()
     {
         isStation = false;
-        road.SetInteger("State", 2);
+        //road.SetInteger("State", 2);
+        Invoke("boardingBus", 5);
     }
 
     public void boardingBus()
     {
+        
         isMoving = true;
         isStation = true;
         road.SetInteger("State", 1);
-        
+        fuel -= 5;
+        Invoke("boardingPass", 2);
+    }
+
+    public void boardingPass()
+    {
         if (maxcount > current)
         {
-           // for (var i = 0; i < UnityEngine.Random.Range(0, maxcount - current); i++)//закомментировал, пока добавляется только один человек
+            for (var i = 0; i < UnityEngine.Random.Range(0, maxcount - current); i++)//закомментировал, пока добавляется только один человек
             {
                 addNewPass();
             }
         }
-        fuel-=5;
+        
     }
     
   
