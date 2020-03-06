@@ -192,7 +192,6 @@ public class Passenger : MonoBehaviour
     private void annigilation() // все операции связанные с удалением текущего объекта
     {
          Destroy(Coords.gameObject);
-         LevelSettings.deletePass();
          Debug.Log("удаление пассажира");
          LevelSettings.grid[(int)currentPosition.x, (int)currentPosition.y].IsWall = false;
     }

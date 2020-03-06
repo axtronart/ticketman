@@ -24,7 +24,7 @@ public class Level : MonoBehaviour
    // private int width = 7; // количество клеток в ширину
     public int scale = 2; // масштаб для стульев, позднее заменить и использовать mapscale
     private int maxcount = 25; // максимальное количество пассажиров
-    private int current = 0; // текущее количество пассажиров
+  
     public Sprite[] headmsprites; // массив голов
     public Sprite[] bodymsprites; // массив туловищ
     public Sprite[] footmsprites; // массив ног
@@ -41,6 +41,8 @@ public class Level : MonoBehaviour
     public Transform back;
     public ArrayList entryPoints;
     public ArrayList exitPoints;//точки выхода, в которых объект уничтожается
+
+    public ArrayList PassengerList;
 
     public bool isStation = true; // переменная указывает что автобус стоит на станции 
   
@@ -118,8 +120,9 @@ public class Level : MonoBehaviour
         //получение точек, в которых будут появляться пассажиры
         entryPoints = getEntryPoints();
         //получение точек выхода
-        exitPoints = getExitPoints(); 
+        exitPoints = getExitPoints();
         //запуск функции добавления пассажиров
+        PassengerList = new ArrayList();
         //InvokeRepeating("busstation", 0, 5);// закомментировал для отладки пути
         road = GameObject.Find("road").GetComponent<Animator>();
         
@@ -156,9 +159,9 @@ public class Level : MonoBehaviour
 
     public void boardingPass()
     {
-        if (maxcount > current)
+        if (maxcount > PassengerList.Count)
         {
-            for (var i = 0; i < UnityEngine.Random.Range(0, maxcount - current); i++)//закомментировал, пока добавляется только один человек
+            for (var i = 0; i < UnityEngine.Random.Range(0, maxcount - PassengerList.Count); i++)//закомментировал, пока добавляется только один человек
             {
                 addNewPass();
             }
@@ -248,7 +251,7 @@ public class Level : MonoBehaviour
         float height = 200;
 
 
-        GUI.Label(new Rect(X, Y * 0, width, height), "Сейчас = " + current.ToString(), style);
+        GUI.Label(new Rect(X, Y * 0, width, height), "Сейчас = " + PassengerList.Count.ToString(), style);
         GUI.Label(new Rect(X, Y * 1, width, height), "Всего = " + maxcount.ToString(), style);
         GUI.Label(new Rect(X, Y * 2, width, height), "Денег = " + money.ToString(), style);
         GUI.Label(new Rect(X, Y * 3, width, height), "Бензин = " + fuel.ToString(), style);
@@ -300,19 +303,6 @@ public class Level : MonoBehaviour
         }
     }
   
-/*
-    public Passenger[] generateListPassenger()
-    {
-        passList = new Passenger[10];
-        for (var i = 0; i < 10; i++)
-        {
-
-        }
-        return passList;
-    }*/
-
-    
-
     void createBusFromMap()
     {
         //Здесь происходит первоначальная отрисовка матрицы автобуса
@@ -347,11 +337,11 @@ public class Level : MonoBehaviour
         if (!grid[(int)tempcoord.x,(int)tempcoord.y].IsWall) 
         {
             generateNewPassenger(UnityEngine.Random.Range(0, 2) == 0);//присвоение текстур
-            Instantiate(person, new Vector3(tempcoord.x * scale, tempcoord.y * scale, 0), Quaternion.identity);
-            current++;
+            PassengerList.Add(Instantiate(person, new Vector3(tempcoord.x * scale, tempcoord.y * scale, 0), Quaternion.identity));
         }
         
     }
+
 
     public ArrayList getEntryPoints()
     {
@@ -386,12 +376,6 @@ public class Level : MonoBehaviour
             }
         }
         return arr;
-    }
-
-  
-    public void deletePass()
-    {
-        current--;
     }
 }
 
