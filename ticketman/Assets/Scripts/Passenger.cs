@@ -20,12 +20,12 @@ public class Passenger : MonoBehaviour
     private Vector2 nextPosition;
     private Vector2 currentDirect;
     private bool isActive = false;
-    public bool inBus = false;
     int countOfStand = 0;
     int maxStepsInRoute = 20; //Максимальное количество клеток, которое должен пройти пассажир, прежде чем идти на выход
     int minStepsInRoute = 5; //Минимальное количество клеток, которое должен пройти пассажир , прежде чем идти на выход
 
     bool isTicket = false;
+    public bool isDelete = false;
 
     bool isGoal = false; // пассажир пришел;
 
@@ -54,7 +54,6 @@ public class Passenger : MonoBehaviour
         speed = 2.0f;
         MoveBool = false;
         isGoal = false;
-        inBus = false;
         
         //countOfStand = 
         
@@ -91,6 +90,11 @@ public class Passenger : MonoBehaviour
     private Vector2 getCurrentPosition(Transform tempCoords)
     {
         return new Vector2((int)(tempCoords.position.x / LevelSettings.scale),(int)(tempCoords.position.y / LevelSettings.scale));
+    }
+    public Vector2 getCurrentPosition()
+    {
+       // Debug.Log("Текущая позиция X "+ currentPosition.x+"  y= "+currentPosition.y);
+        return currentPosition;
     }
     private void MoveToRoute()
     {
@@ -156,17 +160,9 @@ public class Passenger : MonoBehaviour
         return speed * Time.deltaTime;
     }
 
-    private void checkInBus() // функция проверки каждого персонажа в автобусе
+    public bool inBus() // функция проверки каждого персонажа в автобусе
     {
-        if (true)
-        {
-            inBus = true;
-        }
-        else
-            inBus = false;
-            
-
-            //LevelSettings.ma
+        return currentPosition.x > 2;
     }
   
     
@@ -179,21 +175,17 @@ public class Passenger : MonoBehaviour
            //
            if ((Math.Abs(currentPosition.x - ((Vector2)(LevelSettings.exitPoints[i])).x) < error) & (Math.Abs(currentPosition.y - ((Vector2)(LevelSettings.exitPoints[i])).y) < error))
             {
-                annigilation();
+                isDelete = true;
+                //annigilation();
             }
         }
-
-       if (!inBus & LevelSettings.isMoving)
-       {
-      //     annigilation();
-       }
     }
 
-    private void annigilation() // все операции связанные с удалением текущего объекта
+    public void annigilation() // все операции связанные с удалением текущего объекта
     {
-         Destroy(Coords.gameObject);
-         Debug.Log("удаление пассажира");
-         LevelSettings.grid[(int)currentPosition.x, (int)currentPosition.y].IsWall = false;
+        Destroy(Coords.gameObject);
+        Debug.Log("удаление пассажира");
+        
     }
     
     

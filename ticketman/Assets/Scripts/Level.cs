@@ -37,7 +37,7 @@ public class Level : MonoBehaviour
     public Transform brick;
     public Transform chair;
     public Transform floor;
-    public Transform person;
+    public Passenger person;
     public Transform back;
     public ArrayList entryPoints;
     public ArrayList exitPoints;//точки выхода, в которых объект уничтожается
@@ -268,6 +268,8 @@ public class Level : MonoBehaviour
             Debug.Log("move");
             isMoving = !isMoving;
         }
+
+        GUI.Label(new Rect(X, Y * 6, width, height), "В автобусе = " + numInBus().ToString(), style);
     }
 
         
@@ -319,12 +321,12 @@ public class Level : MonoBehaviour
                        else
                            if (Map[x, y] == 1)
                            {
-                               Instantiate(floor, new Vector2(x * scale, y * scale), Quaternion.identity);
+                               Instantiate(floor, new Vector3(x * scale, y * scale,-1), Quaternion.identity);
                            }
                            else
                                if (Map[x, y] == 2)
                                {
-                                   Instantiate(chair, new Vector2(x * scale, y * scale), Quaternion.identity);
+                                   Instantiate(chair, new Vector3(x * scale, y * scale,-1), Quaternion.identity);
                                }
             }
         }
@@ -376,6 +378,32 @@ public class Level : MonoBehaviour
             }
         }
         return arr;
+    }
+    /*
+    public void annigilation() // все операции связанные с удалением текущего объекта
+    {
+        foreach (Passenger p in PassengerList)
+        {
+            if (p.isDelete)
+            {
+                p.annigilation();
+                PassengerList.Remove(p);
+
+                grid[(int)p.currentPosition.x, (int)p.currentPosition.y].IsWall = false;
+            }
+        }
+    }*/
+    public int numInBus()
+    {
+        int inbus = 0;
+        foreach (Passenger p in PassengerList)
+         {
+             if (p.getCurrentPosition().x < Width-2)
+             {
+                inbus++;
+             }
+         }
+        return inbus;
     }
 }
 
