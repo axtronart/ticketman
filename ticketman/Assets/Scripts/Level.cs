@@ -138,6 +138,7 @@ public class Level : MonoBehaviour
     {
         isMoving = true;
         isStation = false;
+        road.SetInteger("State", 2);
         Invoke("movingBus", 1);
     }
     public void movingBus()
@@ -166,6 +167,7 @@ public class Level : MonoBehaviour
                 addNewPass();
             }
         }
+        MovingPassenger();
         
     }
     
@@ -266,11 +268,18 @@ public class Level : MonoBehaviour
         if (GUI.Button(new Rect(X, Y * 5, width, height), "Move = " + isMoving.ToString(), style))
         {
             Debug.Log("move");
-            isMoving = !isMoving;
+            MovingPassenger();
+            //isMoving = !isMoving;
         }
 
         GUI.Label(new Rect(X, Y * 6, width, height), "В автобусе = " + numInBus().ToString(), style);
         GUI.Label(new Rect(X, Y * 7, width, height), "В движении = " + numInMoving().ToString(), style);
+        if (GUI.Button(new Rect(X, Y * 8, width, height), "Move = " + isMoving.ToString(), style))
+        {
+            Debug.Log("startingBus");
+
+            Invoke("startingBus", 1);
+        }
     }
 
 
