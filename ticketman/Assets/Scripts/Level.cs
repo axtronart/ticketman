@@ -263,16 +263,17 @@ public class Level : MonoBehaviour
             Debug.Log("create");
             addNewPass();
         }
-        if (GUI.Button(new Rect(X, Y * 5, width, height), "Move = "+ isMoving.ToString(), style))
+        if (GUI.Button(new Rect(X, Y * 5, width, height), "Move = " + isMoving.ToString(), style))
         {
             Debug.Log("move");
             isMoving = !isMoving;
         }
 
         GUI.Label(new Rect(X, Y * 6, width, height), "В автобусе = " + numInBus().ToString(), style);
+        GUI.Label(new Rect(X, Y * 7, width, height), "В движении = " + numInMoving().ToString(), style);
     }
 
-        
+
     void LoadSourcePassenger()
     {
         headmsprites = Resources.LoadAll<Sprite>("head_m");  //Resources.LoadAll<Sprite>("Sprites");
@@ -397,14 +398,49 @@ public class Level : MonoBehaviour
     {
         int inbus = 0;
         foreach (Passenger p in PassengerList)
-         {
-             if (p.getCurrentPosition().x < Width-2)
-             {
+        {
+            if (p.getCurrentPosition().x < Width - 2)
+            {
                 inbus++;
-             }
-         }
+            }
+        }
         return inbus;
     }
+    public int numInMoving()
+    {
+        int inMoving = 0;
+        foreach (Passenger p in PassengerList)
+        {
+            if (p.MoveBool)
+            {
+                inMoving++;
+            }
+        }
+        return inMoving;
+    }
+
+
+    private bool MovingPassenger()
+    {
+        foreach(Passenger p in PassengerList)
+        {
+            Vector2 temp = new Vector2();
+            if (p.inBus())
+            {
+                temp = generateExitPoint();
+            }
+            else
+            {
+                temp = generateExitPoint();
+            }
+            var path = generateNewPath(p.getCurrentPosition(), temp);
+            
+            p.isMoving = p.setPath(path); 
+        }
+        return false;
+
+    }
+   
 }
 
 

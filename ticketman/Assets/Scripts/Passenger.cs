@@ -12,8 +12,10 @@ public class Passenger : MonoBehaviour
   
     public Transform Coords; //текущие координаты
     public Animator PassAnim;
-    bool MoveBool = false;
+    public bool MoveBool = false;
+    public bool isMoving = false;
    
+
     private float tempstep = 0;
     private ArrayList path = new ArrayList();
     private Vector2 currentPosition;
@@ -51,7 +53,7 @@ public class Passenger : MonoBehaviour
 
         path = LevelSettings.generateNewPath(currentPosition, LevelSettings.generatePosition());
 
-        speed = 2.0f;
+        speed = 4.0f;
         MoveBool = false;
         isGoal = false;
         
@@ -96,10 +98,17 @@ public class Passenger : MonoBehaviour
        // Debug.Log("Текущая позиция X "+ currentPosition.x+"  y= "+currentPosition.y);
         return currentPosition;
     }
-    private void MoveToRoute()
+    public bool setPath(ArrayList p)
+    {
+        path = p;
+        return true;
+    }
+
+    /*
+    public bool MoveToPath(ArrayList path) //если путь закончился false
     {
         PassAnim.SetBool("isMove", MoveBool);
-        if(MoveBool)// движение между точками , чтобы персонажи не зависали между клетками
+        if (MoveBool)// движение между точками , чтобы персонажи не зависали между клетками
         {
             MoveBool = MoveToNewPoint(nextPosition);
         }
@@ -118,23 +127,57 @@ public class Passenger : MonoBehaviour
                     LevelSettings.grid[(int)nextPosition.x, (int)nextPosition.y].IsWall = true;
                 }
                 else
+                    return true;
+            }    
+        }
+
+        return false;
+    }*/
+    
+            
+    public bool MoveToRoute()
+    {
+        PassAnim.SetBool("isMove", MoveBool);
+        if (MoveBool)// движение между точками , чтобы персонажи не зависали между клетками
+        {
+            return MoveBool = MoveToNewPoint(nextPosition);
+        }
+        else
+        {
+            if (isMoving)// можно ли начинать новый шаг
+            {
+
+                nextPosition = getNewStep();
+
+                if (nextPosition != Vector2.zero)
                 {
-                    if (countOfStand > 1)//чтоб пассажиры не бежали сразу на выход
+                    RotateTo(AngleForRotate(currentPosition, nextPosition, currentDirect));
+                    MoveBool = true;
+                    LevelSettings.grid[(int)currentPosition.x, (int)currentPosition.y].IsWall = false;
+                    LevelSettings.grid[(int)nextPosition.x, (int)nextPosition.y].IsWall = true;
+                }
+                else
+                {
+                    
+                    /*if (countOfStand > 1)//чтоб пассажиры не бежали сразу на выход
                     {
                         isGoal = true;
-                        /*
+                        
                         path = LevelSettings.generateNewPath(currentPosition, LevelSettings.generateExitPoint());
-                        countOfStand = 0;*/
+                        countOfStand = 0;
                     }
                     else
                     {
                         path = LevelSettings.generateNewPath(currentPosition, LevelSettings.generatePosition());
                         countOfStand++;
-                    }
+                    }*/
                 }
+                
             }
-       }
+            return false;
+        }
     }
+
     private bool MoveToNewPoint(Vector2 newPosition, int step = 1, double error = 0.01)
     {
         //Идем к следующей точке
