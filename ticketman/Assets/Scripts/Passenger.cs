@@ -9,12 +9,12 @@ public class Passenger : MonoBehaviour
     public GameObject map;
     Level LevelSettings;
     public float speed;
-  
+
     public Transform Coords; //текущие координаты
     public Animator PassAnim;
     public bool MoveBool = false;
     public bool isMoving = false;
-   
+
 
     private float tempstep = 0;
     private ArrayList path = new ArrayList();
@@ -31,35 +31,35 @@ public class Passenger : MonoBehaviour
 
     bool isGoal = false; // пассажир пришел;
 
-   
-       
+
+
     void Start()
     {
         map = GameObject.Find("Level"); // получение ссылки на автобус, к которому прикреплен скрипт
         LevelSettings = map.GetComponent<Level>(); //получение ссылки на скрипт
-      
+
         Coords = gameObject.GetComponent<Transform>();// получение текущих координат
-        Coords.transform.localScale=new Vector3(1.5f,1.5f,1.5f);
+        Coords.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
 
         PassAnim = gameObject.GetComponent<Animator>();
-        
-               
+
+
         //новое
         currentPosition = getCurrentPosition(Coords); // сохраняем текущую позицию
         currentDirect = Vector2.down;
-       //generatePath();//генерируем путь
+        //generatePath();//генерируем путь
 
-        LevelSettings.grid[(int)currentPosition.x,(int)currentPosition.y].IsWall = true;
+        LevelSettings.grid[(int)currentPosition.x, (int)currentPosition.y].IsWall = true;
 
         path = LevelSettings.generateNewPath(currentPosition, LevelSettings.generatePosition());
 
         speed = 4.0f;
         MoveBool = false;
         isGoal = false;
-        
+
         //countOfStand = 
-        
-       // UnityEngine.Random();
+
+        // UnityEngine.Random();
 
         /*
         Debug.Log("Текущая позиция"+ currentPosition);
@@ -67,15 +67,15 @@ public class Passenger : MonoBehaviour
         {
             Debug.Log("ПУТЬ" + temp);
         }*/
-     
+
     }
-    
+
     private Vector2 getNewStep()
     {
         if (path.Count > 0)
         {
             Vector2 temp = (Vector2)path[0];
-            if  (LevelSettings.grid[(int)temp.x,(int)temp.y].IsWall)
+            if (LevelSettings.grid[(int)temp.x, (int)temp.y].IsWall)
             {
                 return Vector2.zero;
             }
@@ -91,12 +91,17 @@ public class Passenger : MonoBehaviour
     //получение текущих координат
     private Vector2 getCurrentPosition(Transform tempCoords)
     {
-        return new Vector2((int)(tempCoords.position.x / LevelSettings.scale),(int)(tempCoords.position.y / LevelSettings.scale));
+        return new Vector2((int)(tempCoords.position.x / LevelSettings.scale), (int)(tempCoords.position.y / LevelSettings.scale));
     }
     public Vector2 getCurrentPosition()
     {
-       // Debug.Log("Текущая позиция X "+ currentPosition.x+"  y= "+currentPosition.y);
+        // Debug.Log("Текущая позиция X "+ currentPosition.x+"  y= "+currentPosition.y);
         return currentPosition;
+    }
+    public Vector2 getNextPosition()
+    {
+        // Debug.Log("Текущая позиция X "+ currentPosition.x+"  y= "+currentPosition.y);
+        return nextPosition;
     }
     public bool setPath(ArrayList p)
     {
@@ -133,8 +138,8 @@ public class Passenger : MonoBehaviour
 
         return false;
     }*/
-    
-            
+
+
     public bool MoveToRoute()
     {
         PassAnim.SetBool("isMove", MoveBool);
@@ -158,7 +163,7 @@ public class Passenger : MonoBehaviour
                 }
                 else
                 {
-                    
+
                     /*if (countOfStand > 1)//чтоб пассажиры не бежали сразу на выход
                     {
                         isGoal = true;
@@ -172,7 +177,7 @@ public class Passenger : MonoBehaviour
                         countOfStand++;
                     }*/
                 }
-                
+
             }
             return false;
         }
@@ -181,12 +186,12 @@ public class Passenger : MonoBehaviour
     private bool MoveToNewPoint(Vector2 newPosition, int step = 1, double error = 0.01)
     {
         //Идем к следующей точке
-        tempstep += MoveStep(Vector2.down,speed);
-        
-        
+        tempstep += MoveStep(Vector2.down, speed);
+
+
         //если мы ушли из начальной точки
         //если мы подошли к новой точке
-        if ((step * LevelSettings.scale - tempstep < 0.1)&&(Math.Abs(nextPosition.x - (Coords.position.x / LevelSettings.scale)) < error) & (Math.Abs(nextPosition.y - (Coords.position.y / LevelSettings.scale)) < error))
+        if ((step * LevelSettings.scale - tempstep < 0.1) && (Math.Abs(nextPosition.x - (Coords.position.x / LevelSettings.scale)) < error) & (Math.Abs(nextPosition.y - (Coords.position.y / LevelSettings.scale)) < error))
         {
             currentDirect = nextPosition - currentPosition;
             currentPosition = nextPosition;
@@ -198,63 +203,68 @@ public class Passenger : MonoBehaviour
     private float MoveStep(Vector2 direction, float speed)
     {
         Coords.Translate(direction * speed * Time.deltaTime);
-       // Debug.Log("speed*Time.deltatime" + speed * Time.deltaTime);
-       // Debug.Log("speed*Time.deltatime*10" + 10*speed * Time.deltaTime);
+        // Debug.Log("speed*Time.deltatime" + speed * Time.deltaTime);
+        // Debug.Log("speed*Time.deltatime*10" + 10*speed * Time.deltaTime);
         return speed * Time.deltaTime;
     }
 
     public bool inBus() // функция проверки каждого персонажа в автобусе
     {
-        return currentPosition.x > 2;
+        return (currentPosition.x <= 6) && (nextPosition.x<=6);
     }
-  
-    
+
+
     //уничтожение объектов 
-   private void checkAndDestroy()
+    private void checkAndDestroy()
     {
-       float error = 0.01f;
-       for (int i = 0; i < LevelSettings.exitPoints.Count;i++ )
-       {
-           //
-           if ((Math.Abs(currentPosition.x - ((Vector2)(LevelSettings.exitPoints[i])).x) < error) & (Math.Abs(currentPosition.y - ((Vector2)(LevelSettings.exitPoints[i])).y) < error))
+        float error = 0.01f;
+        for (int i = 0; i < LevelSettings.exitPoints.Count; i++)
+        {
+            //
+            if ((Math.Abs(currentPosition.x - ((Vector2)(LevelSettings.exitPoints[i])).x) < error) & (Math.Abs(currentPosition.y - ((Vector2)(LevelSettings.exitPoints[i])).y) < error))
             {
                 isDelete = true;
                 //annigilation();
             }
         }
+
     }
 
     public void annigilation() // все операции связанные с удалением текущего объекта
     {
         Destroy(Coords.gameObject);
         Debug.Log("удаление пассажира");
-        
+        LevelSettings.grid[(int)currentPosition.x, (int)currentPosition.y].IsWall = false;
     }
-    
-    
+
+
     private float AngleForRotate(Vector2 curPoint, Vector2 nextPoint, Vector2 curDirect)
     {
         Vector2 nextDirect = nextPoint - curPoint;
-        return Mathf.Rad2Deg*(Mathf.Atan2(nextDirect.y, nextDirect.x) - Mathf.Atan2(curDirect.y, curDirect.x));
+        return Mathf.Rad2Deg * (Mathf.Atan2(nextDirect.y, nextDirect.x) - Mathf.Atan2(curDirect.y, curDirect.x));
     }
     void RotateTo(float Angle)
     {
         transform.Rotate(Vector3.forward, Angle);
     }
-  
+
     void Update()
     {
-   
+
     }
-    void OnMouseDown()
+    public void setActive()
+    {
+        this.GetComponentsInChildren<SpriteRenderer>()[0].material.color = new Color(0.70f, 0.70f, 0.70f);
+            this.GetComponentsInChildren<SpriteRenderer>()[1].material.color = new Color(0.70f, 0.70f, 0.70f);
+            this.GetComponentsInChildren<SpriteRenderer>()[2].material.color = new Color(0.70f, 0.70f, 0.70f);
+    }
+void OnMouseDown()
     {
         isActive = !isActive;
 
         if (isActive)
         {
-            this.GetComponentsInChildren<SpriteRenderer>()[0].material.color = new Color(0.70f, 0.70f, 0.70f);
-            this.GetComponentsInChildren<SpriteRenderer>()[1].material.color = new Color(0.70f, 0.70f, 0.70f);
-            this.GetComponentsInChildren<SpriteRenderer>()[2].material.color = new Color(0.70f, 0.70f, 0.70f);
+            setActive();
         }
         else
         {

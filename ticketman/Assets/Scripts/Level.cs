@@ -49,19 +49,19 @@ public class Level : MonoBehaviour
     //1-непроходимая точка
     public static int[,] mapArrTemp = {
       {1,1,1,1,1,1,1,5,5},
-      {1,2,2,0,2,2,1,4,4},
+      {1,2,2,0,2,2,0,4,4},
       {1,2,2,0,2,2,0,4,4},
       {1,2,2,0,0,0,0,4,4},
       {1,2,2,0,2,2,1,4,4},
       {1,2,2,0,2,2,1,4,4},
       {1,2,2,0,2,2,1,4,4},
       {1,2,2,0,2,2,1,4,4},
-      {1,2,2,0,2,2,0,4,4},
+      {1,2,2,0,2,2,1,4,4},
+      {1,2,2,0,0,0,0,4,4},
+      {1,2,2,0,0,0,0,4,4},
       {1,2,2,0,0,0,0,4,4},
       {1,2,2,0,0,0,1,4,4},
-      {1,2,2,0,0,0,1,4,4},
-      {1,2,2,0,0,0,0,4,4},
-      {1,2,2,2,2,2,0,4,4},
+      {1,1,1,1,1,1,1,4,4},
       {1,1,1,1,1,1,1,5,5},
 };
 
@@ -114,7 +114,7 @@ public class Level : MonoBehaviour
         //загрузка ресурсов 
         LoadSourcePassenger();
         //создание внутренностей автобуса
-       // createBusFromMap();
+        createBusFromMap();
         //создание матрицы автобуса
         createPathMatrix();
         //получение точек, в которых будут появляться пассажиры
@@ -126,7 +126,7 @@ public class Level : MonoBehaviour
         //InvokeRepeating("busstation", 0, 5);// закомментировал для отладки пути
         road = GameObject.Find("road").GetComponent<Animator>();
         
-        Invoke("startingBus",1);
+        Invoke("startingBus",0.1f);
         
        // InvokeRepeating("boardingBus", 5, 10);// закомментировал для отладки пути
         
@@ -138,8 +138,49 @@ public class Level : MonoBehaviour
     {
         isMoving = true;
         isStation = false;
+        deleteOutPassenger();
         road.SetInteger("State", 2);
         Invoke("movingBus", 1);
+    }
+    private void deleteOutPassenger()
+    {
+        for (int i=0;i<PassengerList.Count;i++)
+        {
+            Debug.Log("ВСЕ" + (PassengerList[i] as Passenger));
+            Debug.Log("ВСЕX" + (PassengerList[i] as Passenger).getCurrentPosition().x);
+            Debug.Log("ВСЕY" + (PassengerList[i] as Passenger).getCurrentPosition().y);
+
+            if (!(PassengerList[i] as Passenger).inBus())
+            {
+                (PassengerList[i] as Passenger).isDelete = true;
+            }
+            if ((PassengerList[i] as Passenger).isDelete)
+            {
+                Debug.Log("Удаление"+(PassengerList[i] as Passenger));
+                Debug.Log("X" + (PassengerList[i] as Passenger).getCurrentPosition().x);
+                Debug.Log("Y" + (PassengerList[i] as Passenger).getCurrentPosition().y);
+                (PassengerList[i] as Passenger).annigilation();
+                PassengerList.RemoveAt(i);
+                // p.setActive();
+            }
+        }
+       /* int i = 0;
+        foreach (Passenger p in PassengerList)
+        {
+            if (!p.inBus())
+            {
+                p.isDelete = true;
+            }
+            if (p.isDelete)
+            {
+                p.annigilation();
+                PassengerList.RemoveAt(i);
+                
+               // p.setActive();
+            }
+            i++;
+            */
+      //  }
     }
     public void movingBus()
     {
@@ -168,7 +209,7 @@ public class Level : MonoBehaviour
             }
         }
         MovingPassenger();
-        
+        Invoke("startingBus", 5);
     }
     
   
@@ -449,7 +490,7 @@ public class Level : MonoBehaviour
         return false;
 
     }
-   
+    
 }
 
 
